@@ -1,0 +1,282 @@
+precision mediump float;
+
+varying vec2 v_texCoord;
+uniform sampler2D bg3_texture;
+uniform sampler2D bg4_texture;
+uniform sampler2D s_palette;
+
+uniform vec2 resolution;
+
+uniform vec3 bg3_dist;
+uniform vec4 bg3_palette;
+uniform vec2 bg3_scroll;
+uniform float bg3_compression;
+uniform float bg3_rotation;
+
+uniform vec3 bg4_dist;
+uniform vec4 bg4_palette;
+uniform vec2 bg4_scroll;
+uniform float bg4_compression;
+uniform float bg4_rotation;
+
+uniform ivec2 u_dist_type, u_cycle_type;
+
+#define AMPL	0
+#define FREQ	1
+#define SPEED	2
+
+#define BEGIN1	0
+#define END1	1
+#define BEGIN2	2
+#define END2	3
+
+void main()
+{
+
+	// BG3
+	
+	vec2 bg3_offset = vec2(0.0);
+
+	float y = v_texCoord.y * resolution.y;
+	
+	float bg3_distortion = (bg3_dist[AMPL] * sin(bg3_dist[FREQ] * y + bg3_dist[SPEED]));
+	
+	if(u_dist_type[0] == 0)		// none
+	{
+		bg3_offset.x = 0.0;
+	}
+	else if(u_dist_type[0] == 1)	// horizontal effect
+	{
+		bg3_offset.x = bg3_distortion;
+	}
+	else if(u_dist_type[0] == 2)	// horizontal interlaced effect
+	{
+		bg3_offset.x = floor(mod(y, 2.0)) == 0.0 ? bg3_distortion : -bg3_distortion;
+	}
+	else if(u_dist_type[0] == 3)	// vertical effect
+	{
+		bg3_offset.y = mod(bg3_distortion, resolution.y);
+	}
+	
+	if(u_dist_type[0] == 4)	// horizontal interlaced + shear
+	{
+		bg3_offset.x = floor(mod(y, 2.0)) == 0.0 ? bg3_distortion : -bg3_distortion;
+		bg3_offset.x += (y * (bg3_compression / resolution.y));
+	}
+	else
+	{
+		bg3_offset.y += (y * (bg3_compression / resolution.y));	// compression effect
+	}
+	
+	bg3_offset += bg3_scroll;							// translation effect
+	
+	bg3_offset /= resolution;						// scale values down to 0.0-1.0
+	
+	
+	
+	
+	
+	
+	// BG4
+	
+	vec2 bg4_offset = vec2(0.0);
+	
+	float bg4_distortion = (bg4_dist[AMPL] * sin(bg4_dist[FREQ] * y + bg4_dist[SPEED]));
+	
+	if(u_dist_type[1] == 0)		// none
+	{
+		bg4_offset.x = 0.0;
+	}
+	else if(u_dist_type[1] == 1)	// horizontal effect
+	{
+		bg4_offset.x = bg4_distortion;
+	}
+	else if(u_dist_type[1] == 2)	// horizontal interlaced effect
+	{
+		bg4_offset.x = floor(mod(y, 2.0)) == 0.0 ? bg4_distortion : -bg4_distortion;
+	}
+	else if(u_dist_type[1] == 3)	// vertical effect
+	{
+		bg4_offset.y = mod(bg4_distortion, resolution.y);
+	}
+	
+	if(u_dist_type[1] == 4)	// horizontal interlaced + shear
+	{
+		bg4_offset.x = floor(mod(y, 2.0)) == 0.0 ? bg4_distortion : -bg4_distortion;
+		bg4_offset.x += (y * (bg4_compression / resolution.y));
+	}
+	else
+	{
+		bg4_offset.y += (y * (bg4_compression / resolution.y));	// compression effect
+	}
+	
+	bg4_offset += bg4_scroll;							// translation effect
+	
+	bg4_offset /= resolution;						// scale values down to 0.0-1.0
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	float bg3_index = texture2D(bg3_texture, bg3_offset + v_texCoord).r * 256.0; // get index number
+	float bg4_index = texture2D(bg4_texture, bg4_offset + v_texCoord).r * 256.0;
+	
+	bg3_index = floor(bg3_index + 0.5);
+	bg4_index = floor(bg4_index + 0.5);
+	
+	if(u_cycle_type[0] == 1) // circular palette rotation
+	{
+		if(bg3_index >= bg3_palette[BEGIN1] - 0.5 && bg3_index <= bg3_palette[END1] + 0.5)
+		{
+			float range = bg3_palette[END1] - bg3_palette[BEGIN1];
+			bg3_index = bg3_index - bg3_rotation;
+			
+			if(bg3_index < bg3_palette[BEGIN1]) {
+				bg3_index = bg3_palette[END1] + 1.0 - abs(bg3_palette[BEGIN1] - bg3_index);
+			}
+		}
+	}
+	else if(u_cycle_type[0] == 2) //
+	{
+		if(bg3_index >= bg3_palette[BEGIN1] - 0.5 && bg3_index <= bg3_palette[END1] + 0.5)
+		{
+			float range = bg3_palette[END1] - bg3_palette[BEGIN1];
+			bg3_index = bg3_index - bg3_rotation;
+			
+			if(bg3_index < bg3_palette[BEGIN1]) {
+				bg3_index = bg3_palette[END1] + 1.0 - abs(bg3_palette[BEGIN1] - bg3_index);
+			}
+		}
+		else if(bg3_index >= bg3_palette[BEGIN2] - 0.5 && bg3_index <= bg3_palette[END2] + 0.5)
+		{
+			float range = bg3_palette[END2] - bg3_palette[BEGIN2];
+			bg3_index = bg3_index - bg3_rotation;
+			
+			if(bg3_index < bg3_palette[BEGIN2]) {
+				bg3_index = bg3_palette[END2] + 1.0 - abs(bg3_palette[BEGIN2] - bg3_index);
+			}
+		}
+	}
+	else if(u_cycle_type[0] == 3) // triangle palette rotation
+	{
+		if(bg3_index >= bg3_palette[BEGIN1] - 0.5 && bg3_index <= bg3_palette[END1] + 0.5)
+		{
+			float range = bg3_palette[END1] - bg3_palette[BEGIN1];
+			bg3_index = bg3_index + bg3_rotation - bg3_palette[BEGIN1];
+			
+			range = floor(range + 0.5);
+			bg3_index = floor(bg3_index + 0.5);
+			
+			if(bg3_index > range * 2.0 + 1.0) {
+				bg3_index = bg3_palette[BEGIN1] + (bg3_index - ((range * 2.0) + 2.0));
+			}
+			else if(bg3_index > range) {
+				bg3_index = bg3_palette[END1] - (bg3_index - (range + 1.0));
+			}
+			else {
+				bg3_index += bg3_palette[BEGIN1];
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	if(u_cycle_type[1] == 1) // circular palette rotation
+	{
+		if(bg4_index >= bg4_palette[BEGIN1] - 0.5 && bg4_index <= bg4_palette[END1] + 0.5)
+		{
+			float range = bg4_palette[END1] - bg4_palette[BEGIN1];
+			bg4_index = bg4_index - bg4_rotation;
+			
+			if(bg4_index < bg4_palette[BEGIN1]) {
+				bg4_index = bg4_palette[END1] + 1.0 - abs(bg4_palette[BEGIN1] - bg4_index);
+			}
+		}
+	}
+	else if(u_cycle_type[1] == 2) //
+	{
+		if(bg4_index >= bg4_palette[BEGIN1] - 0.5 && bg4_index <= bg4_palette[END1] + 0.5)
+		{
+			float range = bg4_palette[END1] - bg4_palette[BEGIN1];
+			bg4_index = bg4_index - bg4_rotation;
+			
+			if(bg4_index < bg4_palette[BEGIN1]) {
+				bg4_index = bg4_palette[END1] + 1.0 - abs(bg4_palette[BEGIN1] - bg4_index);
+			}
+		}
+		else if(bg4_index >= bg4_palette[BEGIN2] - 0.5 && bg4_index <= bg4_palette[END2] + 0.5)
+		{
+			float range = bg4_palette[END2] - bg4_palette[BEGIN2];
+			bg4_index = bg4_index - bg4_rotation;
+			
+			if(bg4_index < bg4_palette[BEGIN2]) {
+				bg4_index = bg4_palette[END2] + 1.0 - abs(bg4_palette[BEGIN2] - bg4_index);
+			}
+		}
+	}
+	else if(u_cycle_type[1] == 3) // triangle palette rotation
+	{
+		if(bg4_index >= bg4_palette[BEGIN1] - 0.5 && bg4_index <= bg4_palette[END1] + 0.5)
+		{
+			float range = bg4_palette[END1] - bg4_palette[BEGIN1];
+			bg4_index = bg4_index + bg4_rotation - bg4_palette[BEGIN1];
+			
+			range = floor(range + 0.5);
+			bg4_index = floor(bg4_index + 0.5);
+			
+			if(bg4_index > range * 2.0 + 1.0) {
+				bg4_index = bg4_palette[BEGIN1] + (bg4_index - ((range * 2.0) + 2.0));
+			}
+			else if(bg4_index > range) {
+				bg4_index = bg4_palette[END1] - (bg4_index - (range + 1.0));
+			}
+			else {
+				bg4_index += bg4_palette[BEGIN1];
+			}
+		}
+	}
+	
+	
+	
+
+	
+	bg3_index /= 16.0;
+	bg4_index /= 16.0;
+	
+	
+	
+	vec4 bg3_color = texture2D(s_palette, vec2(bg3_index, 0.0 / 16.0));
+	vec4 bg4_color = texture2D(s_palette, vec2(bg4_index, 1.0 / 16.0));
+
+	//colorB.a *= 0.5;
+	//gl_FragColor.a = colorB.a + colorA.a - (colorB.a * colorA.a);
+	//gl_FragColor.rgb = (1.0 - (colorB.a / gl_FragColor.a)) * colorA.rgb + (colorB.a / gl_FragColor.a) * ((1.0 - colorA.a) * colorB.rgb + colorA.a * colorB.rgb);
+
+	bg4_color.a *= 0.5;
+	gl_FragColor.rgb = bg4_color.rgb * bg4_color.a + bg3_color.rgb * (1.0 - bg4_color.a);
+	gl_FragColor.a = 1.0;
+}
